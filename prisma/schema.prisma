@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SellerType {
+  OWNER
+  AGENT
+  DEVELOPER
+  UNKNOWN
+}
+
+model ListingAnalysis {
+  id                         String             @id @default(cuid())
+  url                        String?
+  title                      String
+  price                      Int
+  location                   String
+  district                   String             @default("Unknown district")
+  neighborhood               String             @default("Unknown neighborhood")
+  propertyType               String             @default("Unknown property")
+  roomCount                  String             @default("Unknown")
+  buildingAge                Int?
+  floorInfo                  String?
+  squareMeters               Int
+  listingAgeDays             Int
+  description                String
+  comparableMedianPricePerM2 Int?
+  previousPrice              Int?
+  sellerType                 SellerType         @default(UNKNOWN)
+  score                      Int
+  classification             String
+  classificationReason       String
+  explanation                String
+  negotiationMin             Int
+  negotiationMax             Int
+  action                     String
+  sellerFatigueIndex         Int
+  negotiationEdge            Int
+  confidenceScore            Int
+  signals                    String[]
+  helpedSignals              String[]
+  hurtSignals                String[]
+  scoreBreakdown             Json
+  comparableInsight          Json
+  parserProvider             String             @default("unknown")
+  parserStatus               String             @default("unsupported")
+  parserMetadata             Json
+  isPartial                  Boolean            @default(false)
+  urlIngestionNotes          String[]
+  comparables                ComparableListing[]
+  watchlistSnapshots         WatchlistSnapshot[]
+  watchlistAsLatest          WatchlistItem[]    @relation("LatestAnalysis")
+  createdAt                  DateTime           @default(now())
+}
+
+model ComparableListing {
+  id                  String          @id @default(cuid())
+  analysisId          String
+  district            String
+  neighborhood        String
+  propertyType        String
+  grossSquareMeters   Int
+  netSquareMeters     Int?
+  roomCount           String
+  buildingAge         Int?
+  floorInfo           String?
+  listingAgeDays      Int
+  askingPrice         Int
+  pricePerSquareMeter Int
+  analysis            ListingAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+}
+
+model WatchlistItem {
+  id                  String             @id @default(cuid())
+  title               String
+  canonicalUrl        String?
+  location            String
+  currentScore        Int
+  currentAction       String
+  currentClassification String
+  latestAskingPrice   Int
+  latestPricePerM2    Int
+  sellerFatigueIndex  Int
+  negotiationEdge     Int
+  parserProvider      String
+  parserStatus        String
+  confidenceScore     Int
+  lastAnalyzedAt      DateTime
+  latestAnalysisId    String?
+  latestAnalysis      ListingAnalysis?   @relation("LatestAnalysis", fields: [latestAnalysisId], references: [id])
+  snapshots           WatchlistSnapshot[]
+  subscriptions       AlertSubscription[]
+  notifications       Notification[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model WatchlistSnapshot {
+  id                  String         @id @default(cuid())
+  watchlistItemId     String
+  analysisId          String
+  score               Int
+  action              String
+  classification      String
+  askingPrice         Int
+  pricePerM2          Int
+  sellerFatigueIndex  Int
+  negotiationEdge     Int
+  confidenceScore     Int
+  parserProvider      String
+  parserStatus        String
+  eventFlags          String[]
+  createdAt           DateTime       @default(now())
+  notifications       Notification[]
+
+  watchlistItem       WatchlistItem  @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
+  analysis            ListingAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+}
+
+
+model NotificationPreference {
+  id                 String   @id @default(cuid())
+  enabledEvents      String[]
+  channels           String[]
+  minimumSeverity    Int      @default(1)
+  quietHoursStart    Int?
+  quietHoursEnd      Int?
+  dedupeWindowMinutes Int     @default(180)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AlertSubscription {
+  id                 String        @id @default(cuid())
+  watchlistItemId    String?
+  enabled            Boolean       @default(true)
+  enabledEvents      String[]
+  channels           String[]
+  minimumSeverity    Int?
+  quietHoursStart    Int?
+  quietHoursEnd      Int?
+  dedupeWindowMinutes Int?
+  watchlistItem      WatchlistItem? @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}
+
+model Notification {
+  id                 String    @id @default(cuid())
+  watchlistItemId    String?
+  snapshotId         String?
+  eventType          String
+  severity           Int
+  title              String
+  message            String
+  dedupeKey          String
+  watchlistItem      WatchlistItem? @relation(fields: [watchlistItemId], references: [id], onDelete: SetNull)
+  snapshot           WatchlistSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  deliveries         NotificationDelivery[]
+  createdAt          DateTime @default(now())
+}
+
+model NotificationDelivery {
+  id                 String    @id @default(cuid())
+  notificationId     String
+  channel            String
+  status             String
+  mode               String
+  error              String?
+  notification       Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now())
+  deliveredAt        DateTime?
+}

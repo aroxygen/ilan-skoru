@@ -32,6 +32,7 @@ export type ListingInput = {
   previousPrice?: number;
   sellerType?: SellerType;
   comparables?: ComparableListingInput[];
+  parserRawHtml?: string;
 };
 
 export type NormalizedListingInput = {

@@ -17,6 +17,7 @@ const MOCK_FIXTURES: Record<string, ParserResult["extracted"]> = {
 export const hepsiemlakParser: ProviderParser = {
   provider: "hepsiemlak",
   canHandle: (url) => url.hostname.includes("hepsiemlak.com"),
+  parseListing: async (url, _options) => {
   parseListing: async (url) => {
     const key = `${url.origin}${url.pathname}`;
     const extracted = MOCK_FIXTURES[key] || {};

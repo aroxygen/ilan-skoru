@@ -17,5 +17,6 @@ export type ParserResult = {
 export type ProviderParser = {
   provider: Exclude<ParserProvider, "unknown">;
   canHandle: (url: URL) => boolean;
+  parseListing: (url: URL, options?: { rawHtml?: string }) => Promise<ParserResult>;
   parseListing: (url: URL) => Promise<ParserResult>;
 };

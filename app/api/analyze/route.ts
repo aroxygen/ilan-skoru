@@ -10,6 +10,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as ListingInput;
 
   const detectedProvider = detectProvider(body.url);
+  const parseResult = await parseListing(body.url, { rawHtml: body.parserRawHtml });
   const parseResult = await parseListing(body.url);
   const parsedNormalized = normalizeParsedListing(parseResult.extracted);
 

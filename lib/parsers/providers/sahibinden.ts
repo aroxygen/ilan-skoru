@@ -27,6 +27,9 @@ const FIXTURE_BY_PATH: Record<string, string> = {
   "/ilan/ornek-2": "listing-2.html",
   "/ilan/sahibinden-istanbul-kadikoy-3-1": "listing-real-1.html",
   "/ilan/sahibinden-istanbul-kartal-2-1": "listing-real-2.html"
+const FIXTURE_BY_PATH: Record<string, string> = {
+  "/ilan/ornek-1": "listing-1.html",
+  "/ilan/ornek-2": "listing-2.html"
 };
 
 function cleanText(value?: string | null) {
@@ -56,6 +59,8 @@ function decodeEntities(value: string) {
 
 function stripTags(html: string) {
   return cleanText(decodeEntities(html.replace(/<[^>]+>/g, " ")));
+function stripTags(html: string) {
+  return cleanText(html.replace(/<[^>]+>/g, " "));
 }
 
 function matchFirst(html: string, patterns: RegExp[]) {
@@ -64,6 +69,7 @@ function matchFirst(html: string, patterns: RegExp[]) {
     if (match?.[1]) {
       return cleanText(decodeEntities(stripTags(match[1]) ?? ""));
     }
+    if (match?.[1]) return cleanText(match[1]);
   }
   return undefined;
 }
@@ -73,6 +79,8 @@ function parsePrice(raw?: string) {
   const normalized = raw.replace(/[^\d]/g, "");
   const value = Number(normalized);
   return Number.isFinite(value) && value > 0 ? value : undefined;
+  const num = Number(normalized);
+  return Number.isFinite(num) && num > 0 ? num : undefined;
 }
 
 function parseSquareMeters(raw?: string) {
@@ -81,6 +89,7 @@ function parseSquareMeters(raw?: string) {
   if (!match?.[1]) return undefined;
   const value = Number(match[1].replace(",", "."));
   return Number.isFinite(value) && value > 0 ? Math.round(value) : undefined;
+  return Number.isFinite(value) ? Math.round(value) : undefined;
 }
 
 function parseBuildingAge(raw?: string) {
@@ -218,6 +227,9 @@ function extractFromHtml(html: string): ExtractionOutcome {
     missingFields,
     warnings
   };
+  if (/yeni|sifir|0/i.test(raw)) return 0;
+  const match = raw.match(/\d+/);
+  return match ? Number(match[0]) : undefined;
 }
 
 async function loadFixtureHtml(url: URL) {
@@ -260,6 +272,70 @@ async function safeFetchHtml(url: URL) {
     clearTimeout(timeout);
   }
 }
+function extractFromHtml(html: string) {
+  const title = matchFirst(html, [
+    /<h1[^>]*class=["'][^"']*classifiedDetailTitle[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i,
+    /<h1[^>]*>([\s\S]*?)<\/h1>/i
+  ]);
+
+  const priceRaw = matchFirst(html, [
+    /<h3[^>]*>([\s\S]*?TL[\s\S]*?)<\/h3>/i,
+    /data-testid=["']price["'][^>]*>([\s\S]*?)<\//i,
+    /(\d[\d\.,\s]+\s*TL)/i
+  ]);
+
+  const location = matchFirst(html, [
+    /<span[^>]*class=["'][^"']*location[^"']*["'][^>]*>([\s\S]*?)<\/span>/i,
+    /(İstanbul\s*\/\s*[^<\n]+\/\s*[^<\n]+)/i
+  ]);
+
+  const grossSquareRaw = matchFirst(html, [
+    /Br[üu]t\s*(?:Metrekare|m2)[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i,
+    /Br[üu]t\s*m2<\/td>\s*<td>([\s\S]*?)<\/td>/i
+  ]);
+
+  const roomCount = matchFirst(html, [
+    /Oda\s*Say[ıi]s[ıi][\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i,
+    /Oda\s*Say[ıi]s[ıi]<\/td>\s*<td>([\s\S]*?)<\/td>/i,
+    /(\d\s*\+\s*\d)/
+  ]);
+
+  const buildingAgeRaw = matchFirst(html, [
+    /Bina\s*Ya[şs][ıi][\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i,
+    /Bina\s*Ya[şs][ıi]<\/td>\s*<td>([\s\S]*?)<\/td>/i
+  ]);
+
+  const descriptionRaw = matchFirst(html, [
+    /<div[^>]*class=["'][^"']*classifiedDescription[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    /<section[^>]*id=["']description["'][^>]*>([\s\S]*?)<\/section>/i
+  ]);
+
+  return {
+    title,
+    price: parsePrice(priceRaw),
+    location,
+    squareMeters: parseSquareMeters(grossSquareRaw),
+    roomCount: roomCount ? roomCount.replace(/\s+/g, "") : undefined,
+    buildingAge: parseBuildingAge(buildingAgeRaw),
+    description: descriptionRaw ? stripTags(descriptionRaw) : undefined
+  };
+}
+import { ParserResult, ProviderParser } from "@/lib/parsers/types";
+
+const MOCK_FIXTURES: Record<string, ParserResult["extracted"]> = {
+  "https://www.sahibinden.com/ilan/ornek-1": {
+    title: "Sahibinden Örnek Daire",
+    price: 5750000,
+    location: "Kadikoy",
+    district: "Kadikoy",
+    neighborhood: "Fenerbahce",
+    propertyType: "Apartment",
+    roomCount: "3+1",
+    squareMeters: 125,
+    listingAgeDays: 46,
+    description: "Owner listing. Price updated recently."
+  }
+};
 
 export const sahibindenParser: ProviderParser = {
   provider: "sahibinden",
@@ -282,6 +358,12 @@ export const sahibindenParser: ProviderParser = {
         usedMockData = true;
         warnings.push("Fixture HTML fallback used for Sahibinden parsing.");
       }
+    let html = options?.rawHtml;
+    let warningPrefix = "";
+
+    if (!html) {
+      html = await loadFixtureHtml(url);
+      warningPrefix = "Fixture HTML used. ";
     }
 
     if (!html) {
@@ -304,6 +386,41 @@ export const sahibindenParser: ProviderParser = {
       missingFields: extraction.missingFields,
       warnings: [...warnings, ...extraction.warnings],
       usedMockData
+        missingFields: ["title", "price", "location", "squareMeters", "roomCount", "description"],
+        warnings: ["No raw HTML or fixture HTML available for this Sahibinden URL."],
+        usedMockData: true
+      };
+    }
+
+    const extracted = extractFromHtml(html);
+    const requiredFields = ["title", "price", "location", "squareMeters", "roomCount", "description"];
+    const missingFields = requiredFields.filter((field) => !(extracted as Record<string, unknown>)[field]);
+
+    const warnings: string[] = [];
+    if (warningPrefix) warnings.push(`${warningPrefix}No network scraping executed.`);
+    if (missingFields.length > 0) warnings.push(`Missing or uncertain fields: ${missingFields.join(", ")}.`);
+    if (!extracted.buildingAge) warnings.push("Building age not reliably detected.");
+
+    return {
+      provider: "sahibinden",
+      status: missingFields.length === 0 ? "supported" : "partial",
+      extracted,
+      missingFields,
+      warnings,
+  parseListing: async (url) => {
+    const key = `${url.origin}${url.pathname}`;
+    const extracted = MOCK_FIXTURES[key] || {};
+    const missingFields = ["title", "price", "location", "squareMeters", "description"].filter((f) => !(f in extracted));
+
+    return {
+      provider: "sahibinden",
+      status: extracted.title ? (missingFields.length > 0 ? "partial" : "supported") : "failed",
+      extracted,
+      missingFields,
+      warnings: extracted.title
+        ? ["Parsed via mock sahibinden provider fixture."]
+        : ["Provider supported, but no mock fixture exists for this URL yet."],
+      usedMockData: true
     };
   }
 };

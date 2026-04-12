@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-terminal-950 text-slate-100 antialiased;
+}
+
+.panel {
+  @apply rounded-xl border border-slate-800 bg-terminal-900/80 p-4 shadow-[0_0_0_1px_rgba(45,212,191,0.03),0_10px_20px_rgba(0,0,0,0.4)];
+}
+
+.metric {
+  @apply rounded-lg border border-slate-800 bg-terminal-950/70 p-3;
+}

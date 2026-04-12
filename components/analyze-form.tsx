@@ -33,6 +33,9 @@ type PrefillResult = {
 
 function parseComparableJson(value: string) {
   if (!value.trim()) return [];
+function parseComparableJson(value: string) {
+  if (!value.trim()) return [];
+
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed : [];
@@ -89,6 +92,7 @@ export function AnalyzeForm() {
       setPrefilling(false);
     }
   }
+  const [result, setResult] = useState<AnalyzeResponse | null>(null);
 
   async function onSubmit(formData: FormData) {
     setLoading(true);
@@ -121,6 +125,10 @@ export function AnalyzeForm() {
         body: JSON.stringify(payload)
       });
       if (!response.ok) throw new Error("Analyze request failed.");
+
+      if (!response.ok) {
+        throw new Error("Analyze request failed.");
+      }
 
       const data: AnalyzeResponse = await response.json();
       setResult(data);
@@ -162,6 +170,20 @@ export function AnalyzeForm() {
           <input name="floorInfo" value={floorInfo} onChange={(e) => setFloorInfo(e.target.value)} placeholder="Floor info (e.g. 4/10)" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
           <input name="squareMeters" value={squareMeters} onChange={(e) => setSquareMeters(e.target.value)} type="number" placeholder="Gross m²" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
           <input name="listingAgeDays" value={listingAgeDays} onChange={(e) => setListingAgeDays(e.target.value)} type="number" placeholder="Listing age (days)" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+        <p className="text-xs text-slate-400">Paste URL only for partial analysis, or combine URL + manual fields for a full score.</p>
+        <input name="url" placeholder="Listing URL (optional)" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+        <input name="title" placeholder="Title" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input name="price" type="number" placeholder="Price" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="location" placeholder="Location" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="district" placeholder="District" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="neighborhood" placeholder="Neighborhood" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="propertyType" placeholder="Property type" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="roomCount" placeholder="Room count (e.g. 3+1)" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="buildingAge" type="number" placeholder="Building age (optional)" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="floorInfo" placeholder="Floor info (e.g. 4/10)" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="squareMeters" type="number" placeholder="Gross m²" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+          <input name="listingAgeDays" type="number" placeholder="Listing age (days)" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
           <input name="comparableMedianPricePerM2" type="number" placeholder="Fallback median price/m²" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
           <input name="previousPrice" type="number" placeholder="Previous price" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
           <select name="sellerType" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2">
@@ -173,6 +195,13 @@ export function AnalyzeForm() {
         </div>
         <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} placeholder="Description text" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
         <textarea name="comparablesJson" rows={4} placeholder='Optional comparable snapshot JSON array (advanced).' className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2 text-xs" />
+        <textarea name="description" rows={5} placeholder="Description text" className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2" />
+        <textarea
+          name="comparablesJson"
+          rows={4}
+          placeholder='Optional comparable snapshot JSON array (advanced).'
+          className="rounded-lg border border-slate-700 bg-terminal-950 px-3 py-2 text-xs"
+        />
         <button disabled={loading} className="rounded-lg bg-terminal-500 px-4 py-2 font-semibold text-slate-900 hover:bg-terminal-400 disabled:opacity-60">
           {loading ? "Analyzing..." : "Run Decision Engine"}
         </button>
@@ -182,6 +211,9 @@ export function AnalyzeForm() {
         <p className="text-sm uppercase tracking-wide text-slate-400">Latest Analysis</p>
         {!result ? (
           <div className="panel"><p className="text-sm text-slate-300">No output yet. Submit listing data to see score, class, action, and negotiation range.</p></div>
+          <div className="panel">
+            <p className="text-sm text-slate-300">No output yet. Submit listing data to see score, class, action, and negotiation range.</p>
+          </div>
         ) : (
           <div className="space-y-2">
             <AnalysisResultCard {...result} compact />

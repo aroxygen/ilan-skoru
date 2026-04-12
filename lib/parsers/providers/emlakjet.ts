@@ -19,6 +19,7 @@ export const emlakjetParser: ProviderParser = {
   provider: "emlakjet",
   canHandle: (url) => url.hostname.includes("emlakjet.com"),
   parseListing: async (url, _options) => {
+  parseListing: async (url) => {
     const key = `${url.origin}${url.pathname}`;
     const extracted = MOCK_FIXTURES[key] || {};
     const missingFields = ["title", "price", "location", "squareMeters", "description"].filter((f) => !(f in extracted));

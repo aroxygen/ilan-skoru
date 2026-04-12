@@ -11,6 +11,7 @@ export async function POST(request: Request) {
 
   const detectedProvider = detectProvider(body.url);
   const parseResult = await parseListing(body.url, { rawHtml: body.parserRawHtml });
+  const parseResult = await parseListing(body.url);
   const parsedNormalized = normalizeParsedListing(parseResult.extracted);
 
   // Manual input should override parser-extracted values.

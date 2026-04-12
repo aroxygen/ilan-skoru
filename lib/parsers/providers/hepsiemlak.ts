@@ -18,6 +18,7 @@ export const hepsiemlakParser: ProviderParser = {
   provider: "hepsiemlak",
   canHandle: (url) => url.hostname.includes("hepsiemlak.com"),
   parseListing: async (url, _options) => {
+  parseListing: async (url) => {
     const key = `${url.origin}${url.pathname}`;
     const extracted = MOCK_FIXTURES[key] || {};
     const missingFields = ["title", "price", "location", "squareMeters", "description"].filter((f) => !(f in extracted));

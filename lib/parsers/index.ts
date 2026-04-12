@@ -19,6 +19,7 @@ export function detectProvider(urlRaw?: string): ParserProvider {
 }
 
 export async function parseListing(urlRaw?: string, options?: { rawHtml?: string }): Promise<ParserResult> {
+export async function parseListing(urlRaw?: string): Promise<ParserResult> {
   if (!urlRaw) {
     return {
       provider: "unknown",
@@ -57,6 +58,7 @@ export async function parseListing(urlRaw?: string, options?: { rawHtml?: string
   }
 
   return parser.parseListing(url, options);
+  return parser.parseListing(url);
 }
 
 export function normalizeParsedListing(parsed: ParserResult["extracted"]): Partial<ListingInput> {

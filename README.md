@@ -216,3 +216,22 @@ prisma/
 
 Add a fetcher abstraction that retrieves cached HTML snapshots from a worker queue and feeds parser modules, then add parser regression tests per provider template.
 Implement real channel connectors (SMTP/API bot/webpush) behind the same adapter contracts with retry policy, rate limits, and user authentication.
+
+---
+
+## Arox Emlak Operatörü (Yeni modül)
+
+Bu repoya FastAPI tabanlı karar motoru, Next.js koyu tema ekranı ve Chrome extension eklendi.
+
+### Bileşenler
+
+- `arox-backend/`: FastAPI + SQLite + scraper + psikolojik skor motoru
+- `app/arox/page.tsx`: React + Tailwind minimal ekran
+- `app/api/arox/analiz/route.ts`: Next.js proxy endpoint
+- `arox-extension/`: Manifest v3 extension (content script + popup)
+
+### Hızlı akış
+
+1. `uvicorn app.main:app --reload --port 8000`
+2. `npm run dev`
+3. `/arox` ekranına link gir ve sonucu al.

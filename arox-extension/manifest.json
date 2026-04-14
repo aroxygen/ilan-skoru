@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Arox Emlak Operatörü",
+  "version": "1.0.0",
+  "description": "İlan sayfasında tek tıkla psikoloji bazlı karar üretir.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": [
+    "https://*.sahibinden.com/*",
+    "https://*.hepsiemlak.com/*",
+    "https://*.emlakjet.com/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.sahibinden.com/*",
+        "https://*.hepsiemlak.com/*",
+        "https://*.emlakjet.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}
